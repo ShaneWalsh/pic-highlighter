@@ -2,7 +2,7 @@
 <!-- 
     Hover on entrypoints to see elements.
     Left click on entrypoints to toggle selected state.
-    Right on elements to copy link.
+    Right on elements to copy link, if no link then the text will be copied instead.
     Pic Highlighter V1.0.0
  -->
 
@@ -302,7 +302,7 @@
             const v= this.getOffset(canvas);
             mouseX =  Math.floor(e.pageX)-v.left;
             mouseY =  Math.floor(e.pageY)-v.top;
-            lib2d.reversed(entryPoints).forEach(e => {
+            lib2d.reversed(getCurrentEntryPoints()).forEach(e => {
                 e.setHovered(lib2d.pointInsideSprite({x:mouseX,y:mouseY},e.hitboxes()));
             })
 	    },
@@ -312,7 +312,7 @@
             mouseX =  Math.floor(e.pageX)-v.left;
             mouseY =  Math.floor(e.pageY)-v.top;
             if(e.button == 0){ // 0 = left click
-                let rev = lib2d.reversed(entryPoints);
+                let rev = lib2d.reversed(getCurrentEntryPoints());
                 for(let i = 0; i < rev.length; i++){
                     if(lib2d.pointInsideSprite({x:mouseX,y:mouseY},rev[i].hitboxes())){
                         rev[i].toggleSelected(); 
@@ -330,19 +330,21 @@
             const v= this.getOffset(canvas);
             mouseX =  Math.floor(e.pageX)-v.left;
             mouseY =  Math.floor(e.pageY)-v.top;
-            let rev = lib2d.reversed(entryPoints);
+            let rev = lib2d.reversed(getCurrentEntryPoints());
             for(let i = 0; i < rev.length; i++){
                 let ep = rev[i];
                 if(lib2d.pointInsideSprite({x:mouseX,y:mouseY},ep.hitboxes())){
                     ep.copylink();
                     return;
                 }
-                let revElements = lib2d.reversed(ep.elements);
-                for(let i = 0; i < revElements.length; i++){
-                    if(lib2d.pointInsideSprite({x:mouseX,y:mouseY},revElements[i].hitboxes())){
-                        revElements[i].copylink();
-                    return;
-                }
+                if(ep._isSelected) { // if its not selected then we should not be able to see its elements for right clicking, right?
+                    let revElements = lib2d.reversed(ep.elements);
+                    for(let i = 0; i < revElements.length; i++){
+                        if(lib2d.pointInsideSprite({x:mouseX,y:mouseY},revElements[i].hitboxes())){
+                            revElements[i].copylink();
+                            return;
+                        }
+                    }
                 }
             }
         },
@@ -407,10 +409,19 @@
         getColor() {
             return this.color;
         }
+        // Copy the link if there is one, else copy the text.
         copylink(){
             if(this.link && this.link !== ""){
                 var input = document.createElement('input');
                 input.setAttribute('value', this.link);
+                document.body.appendChild(input);
+                input.select();
+                var result = document.execCommand('copy');
+                document.body.removeChild(input);
+                return result;
+            } else if(this.text && this.text !== ""){
+                var input = document.createElement('input');
+                input.setAttribute('value', this.text);
                 document.body.appendChild(input);
                 input.select();
                 var result = document.execCommand('copy');
@@ -471,6 +482,8 @@
                     elementsCon.push(new Line(el));
                 } else if(el.id.startsWith("SH")){
                     elementsCon.push(new Shape(el));
+                } else if(el.id.startsWith("SEP")){
+                    elementsCon.push(new EntryPoint(el));
                 }
             }
             this.elements = elementsCon;
@@ -478,10 +491,18 @@
         }
 
         setHovered(bool){this._isHovered= bool; if(!this._isHovered){this._hoverOverride = false}}
-        toggleSelected(){this._isSelected = !this._isSelected; this._hoverOverride = true;}
+        toggleSelected(){
+            this._isSelected = !this._isSelected; 
+            this._hoverOverride = true;
+            if(this._isSelected === false){
+                let sep = this.getSEP();
+                sep.forEach(ep => {
+                    ep.toggleSelected(false)
+                })
+            }
+        }
         
         shouldDraw(){
-            // potentially enhance if subentry points are added to check if parent is selected or hovered before displaying.
             return true;
         }
 
@@ -523,6 +544,24 @@
             } else {
                 return this.color;
             }
+        }
+
+        // Find all of the sub entry points and return then.
+        getEP(){
+            let arr = [this];
+            if(this._isSelected) {
+                arr = arr.concat(this.getSEP())
+            }
+            return arr;
+        }
+        getSEP(){
+            let arr = [];
+            this.elements.forEach(element => {
+                if(element instanceof EntryPoint){
+                    arr = arr.concat(element.getEP())
+                }
+            });
+            return arr;
         }
     }
 
@@ -603,6 +642,14 @@
         absVal(val) { return (val < 0) ? -val : val; }
     }
     
+    function getCurrentEntryPoints(){
+        let array = [];
+        entryPoints.forEach(ep => {
+            array = array.concat(ep.getEP())
+        });
+        return array;
+    }
+
     // Main logic block for rendering.
     function render() {
         if(data) {
@@ -639,7 +686,7 @@
     } 
 
     // PUT YOUR EXPORTED JSON HERE
-    data = {"entryPoints":[{"id":"EP1650384041187","name":"Fenrir-3","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":218,"y":135},"size":{"sizeX":216,"sizeY":39},"shape":"RECT","link":"","text":"EXAMPLE","textSize":30,"textColor":"#000","textAlign":"TOPLEFT","fillColor":"#fff","isFilled":false,"_chunks":[{"x":223,"y":162,"text":"EXAMPLE"}],"elements":[{"id":"SH1650384076352","name":"Mermaid-4","color":"#000","strokeWidth":"2","lineStyle":"FULL","cords":{"x":183,"y":244},"size":{"sizeX":287,"sizeY":149},"shape":"CIRCLE","link":"","text":"","textSize":30,"textColor":"#000","textAlign":"TOPLEFT","fillColor":"#fff","isFilled":false,"_chunks":[]},{"id":"LN1650384081547","name":"Typhon-5","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":322,"y":133},"startArrowStyle":"FILLED","endArrowStyle":"ARROW","startArrowSize":"SMALL","endArrowSize":"SMALL","secondaryCords":[{"x":321,"y":70}],"tempStartCord":null,"tempCord":null,"cordsSet":false,"held":false}],"isHoverable":true,"hoverBorderColor":"#77DD66","isSelectable":true,"isSelectedByDefault":true,"selectedFillColor":"#fff","selectedBorderColor":"#265828","_display":true},{"id":"EP1650534471909","name":"Fomorians-0","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":0,"y":0},"size":{"sizeX":0,"sizeY":0},"shape":"RECT","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[],"elements":[],"isHoverable":true,"hoverBorderColor":"#77DD66","isSelectable":true,"isSelectedByDefault":false,"selectedFillColor":"#fff","selectedBorderColor":"#265828","_display":true},{"id":"EP1650534490665","name":"Onocentaur-2","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":561,"y":468},"size":{"sizeX":165,"sizeY":89},"shape":"CIRCLE","link":"","text":"Some Example","textSize":15,"textColor":"#000","textAlign":"SIDEBARCENTER","fillColor":"#ff0","isFilled":true,"_chunks":[{"x":566,"y":482,"text":"Some"},{"x":566,"y":497,"text":"Example"}],"elements":[{"id":"SH1650534569247","name":"Cockatrice-3","color":"#000","strokeWidth":"1","lineStyle":"DOTTED","cords":{"x":805,"y":510},"size":{"sizeX":69,"sizeY":30},"shape":"RECT","link":"linkCopied","text":"Content","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#ff0","isFilled":true,"_chunks":[{"x":805.1666666666666,"y":530,"text":"Content"}]},{"id":"LN1650534624343","name":"Longma-4","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":828,"y":509},"startArrowStyle":"NONE","endArrowStyle":"UNFILLED","startArrowSize":"SMALL","endArrowSize":"MEDIUM","secondaryCords":[{"x":829,"y":498},{"x":823,"y":374},{"x":967,"y":380},{"x":951,"y":629},{"x":837,"y":629},{"x":695,"y":583}],"tempStartCord":null,"tempCord":{"x":951,"y":629},"cordsSet":true,"held":false},{"id":"LN1650534642058","name":"Hecatoncheires-5","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":643,"y":430},"startArrowStyle":"NONE","endArrowStyle":"ARROW","startArrowSize":"SMALL","endArrowSize":"TINY","secondaryCords":[{"x":642,"y":424},{"x":630,"y":272},{"x":820,"y":373}],"tempStartCord":null,"tempCord":null,"cordsSet":true,"held":false}],"isHoverable":true,"hoverBorderColor":"#77DD66","isSelectable":true,"isSelectedByDefault":false,"selectedFillColor":"#f0f","selectedBorderColor":"#265828","_display":true}],"_selecting":false,"_defaultValues":{"width":1024,"height":800,"color":"#000","strokeWidth":0.6,"textColor":"#000","textSize":15,"fillColor":"#fff","hoverBorderColor":"#77DD66","selectedFillColor":"#fff","selectedBorderColor":"#265828","backgroundColor":"#F8F8F8"},"src":null,"version":"1.0.0"}
+    data = {"entryPoints":[{"id":"EP1650800038891","name":"Geryon-0","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":139,"y":182},"_isHovered":false,"_isSelected":false,"_hoverOverride":true,"size":{"sizeX":141,"sizeY":73},"shape":"RECT","link":"","text":"d asd","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[{"x":183.44736842105263,"y":223.5,"text":"d asd"}],"elements":[{"id":"SEP1650800042963","name":"Geryon-0Leprechaun-1","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":374,"y":187},"_isHovered":false,"_isSelected":true,"_hoverOverride":true,"size":{"sizeX":193,"sizeY":62},"shape":"RECT","link":"","text":"ds","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[{"x":455.5769230769231,"y":223,"text":"ds"}],"elements":[{"id":"SH1650800049691","name":"Basilisk-2","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":610,"y":135},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"size":{"sizeX":100,"sizeY":51},"shape":"RECT","link":"Linky","text":"Linky","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[{"x":634.6428571428571,"y":165.5,"text":"Linky"}]},{"id":"LN1650800052571","name":"Cyclops-3","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":530,"y":212},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"startArrowStyle":"NONE","endArrowStyle":"NONE","startArrowSize":"SMALL","endArrowSize":"SMALL","secondaryCords":[{"x":621,"y":168}],"tempStartCord":null,"tempCord":null,"cordsSet":false,"held":false},{"id":"SEP1650800055932","name":"Geryon-0Leprechaun-1Makara-4","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":372,"y":276},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"size":{"sizeX":199,"sizeY":68},"shape":"RECT","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[],"elements":[{"id":"SH1650800109051","name":"Makara-5","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":615,"y":341},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"size":{"sizeX":121,"sizeY":59},"shape":"RECT","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[]}],"isHoverable":true,"hoverBorderColor":"#77DD66","isSelectable":true,"isSelectedByDefault":false,"selectedFillColor":"#fff","selectedBorderColor":"#265828","_display":true}],"isHoverable":true,"hoverBorderColor":"#77DD66","isSelectable":true,"isSelectedByDefault":true,"selectedFillColor":"#fff","selectedBorderColor":"#265828","_display":true}],"isHoverable":true,"hoverBorderColor":"#77DD66","isSelectable":true,"isSelectedByDefault":false,"selectedFillColor":"#fff","selectedBorderColor":"#265828","_display":true},{"id":"EP1650800111019","name":"Werewolf-6","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":123,"y":414},"_isHovered":false,"_isSelected":false,"_hoverOverride":true,"size":{"sizeX":169,"sizeY":73},"shape":"RECT","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[],"elements":[{"id":"SH1650800112874","name":"Cerberus-7","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":452,"y":536},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"size":{"sizeX":130,"sizeY":51},"shape":"RECT","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[]},{"id":"LN1650800114946","name":"Makara-8","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":294,"y":488},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"startArrowStyle":"NONE","endArrowStyle":"NONE","startArrowSize":"SMALL","endArrowSize":"SMALL","secondaryCords":[{"x":450,"y":538}],"tempStartCord":null,"tempCord":null,"cordsSet":false,"held":false},{"id":"LN1650800119459","name":"Leviathan-9","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":584,"y":537},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"startArrowStyle":"NONE","endArrowStyle":"NONE","startArrowSize":"SMALL","endArrowSize":"SMALL","secondaryCords":[{"x":756,"y":538}],"tempStartCord":null,"tempCord":null,"cordsSet":false,"held":false}],"isHoverable":true,"hoverBorderColor":"#77DD66","isSelectable":true,"isSelectedByDefault":false,"selectedFillColor":"#fff","selectedBorderColor":"#265828","_display":false},{"id":"EP1650800123795","name":"Serpopard-10","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":755,"y":537},"_isHovered":false,"_isSelected":false,"_hoverOverride":true,"size":{"sizeX":167,"sizeY":53},"shape":"RECT","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[],"elements":[],"isHoverable":true,"hoverBorderColor":"#77DD66","isSelectable":true,"isSelectedByDefault":false,"selectedFillColor":"#fff","selectedBorderColor":"#265828","_display":true}],"_selecting":false,"_defaultValues":{"width":1024,"height":800,"color":"#000","strokeWidth":0.6,"textColor":"#000","textSize":15,"fillColor":"#fff","hoverBorderColor":"#77DD66","selectedFillColor":"#fff","selectedBorderColor":"#265828","backgroundColor":"#F8F8F8"},"src":null,"version":"1.0.0"}
     // 
 
     load();
