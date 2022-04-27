@@ -173,7 +173,58 @@
             ctx.stroke();
             ctx.restore();
         },
-
+        drawRoundRect (x, y, sizeX,sizeY, width, radius, color, fill, style, ctx) {
+            ctx.save();  
+            ctx.beginPath();
+            if (typeof radius === 'undefined') {
+                radius = 5;
+            }
+            if (typeof radius === 'number') {
+                radius = {tl: radius, tr: radius, br: radius, bl: radius};
+            } else {
+                var defaultRadius = {tl: 0, tr: 0, br: 0, bl: 0};
+                for (var side in defaultRadius) {
+                    radius[side] = radius[side] || defaultRadius[side];
+                }
+            }
+            if( style === "DOTTED" ) {
+                ctx.setLineDash([5, 5]);
+            }
+            ctx.lineWidth = width;
+            ctx.moveTo(x + radius.tl, y);
+            ctx.lineTo(x + sizeX - radius.tr, y);
+            ctx.quadraticCurveTo(x + sizeX, y, x + sizeX, y + radius.tr);
+            ctx.lineTo(x + sizeX, y + sizeY - radius.br);
+            ctx.quadraticCurveTo(x + sizeX, y + sizeY, x + sizeX - radius.br, y + sizeY);
+            ctx.lineTo(x + radius.bl, y + sizeY);
+            ctx.quadraticCurveTo(x, y + sizeY, x, y + sizeY - radius.bl);
+            ctx.lineTo(x, y + radius.tl);
+            ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+            ctx.closePath();
+            if (fill) {
+                ctx.fillStyle = fill;
+                ctx.fill();
+            }
+            ctx.strokeStyle = color;
+            ctx.stroke();
+            ctx.restore();
+        },
+        drawOval (x, y, sizeX,sizeY, width, color, fill, style, ctx) {
+            ctx.save();  
+            ctx.beginPath();
+            if( style === "DOTTED" ) {
+                ctx.setLineDash([5, 5]);
+            }
+            ctx.lineWidth = width;
+            ctx.ellipse(x, y, sizeX, sizeY, 0, 0, Math.PI*2);
+            if (fill) {
+                ctx.fillStyle = fill;
+                ctx.fill();
+            }
+            ctx.strokeStyle = color;
+            ctx.stroke();
+            ctx.restore();
+        },
         writeInPixels(x, y, size, text, color, align, cords, sizes, ctx){
             //ctx.font = size + "px 'Century Gothic'";
             if(align === "SIDEBARLEFT"){
@@ -431,9 +482,13 @@
         }
 
         draw(ctx) {
-            if(this.shape === "RECT"){
+            if(this.shape === "RECT") {
                 drawing.drawBorder( this.cords.x,this.cords.y,this.size.sizeX,this.size.sizeY,this.strokeWidth,this.color,this.getFill(),this.lineStyle,ctx )
-            } else if(this.shape === "DIAMOND"){
+            } else if(this.shape === "ROUNDEDRECT") {
+                drawing.drawRoundRect( this.cords.x, this.cords.y, this.size.sizeX, this.size.sizeY, this.strokeWidth, 5, this.getColor(), this.getFill(), this.lineStyle, ctx )
+            } else if(this.shape === "OVAL") {
+                drawing.drawOval( this.cords.x + this.size.sizeX/2 , this.cords.y + this.size.sizeY/2, this.size.sizeX/2, this.size.sizeY/2, this.strokeWidth, this.getColor(), this.getFill(), this.lineStyle, ctx )
+            } else if(this.shape === "DIAMOND") {
                 const left = {x:this.cords.x, y :this.cords.y+ (this.size.sizeY/2) };
                 const top = {x:this.cords.x + (this.size.sizeX/2), y :this.cords.y };
                 const right = {x:this.cords.x + this.size.sizeX, y :this.cords.y+ (this.size.sizeY/2) };
@@ -441,7 +496,7 @@
 
                 drawing.drawShape([{x:left.x,y:left.y},{x:top.x,y:top.y},{x:right.x,y:right.y},{x:bottom.x,y:bottom.y},{x:left.x,y:left.y}], this.strokeWidth, this.color, this.getFill(), this.lineStyle, ctx)
                 // TODO replace with a drawshape method, takes cords, connects the dots with lines, fills with provided fill value
-            } else if(this.shape === "CIRCLE"){
+            } else if(this.shape === "CIRCLE") {
                 drawing.drawCircle( this.cords.x + (this.size.sizeX/2),this.cords.y + (this.size.sizeY/2),this.size.sizeX/2,this.getFill(),this.color,this.strokeWidth,this.lineStyle,ctx )
             }
             this._chunks.forEach(_chunks => {
@@ -456,7 +511,6 @@
 
         hitboxes(){return {...this.cords,...this.size}}
         
-
     }
 
     class EntryPoint extends Shape {
@@ -672,7 +726,7 @@
     } 
 
     // PUT YOUR EXPORTED JSON HERE
-    data = {"entryPoints":[{"id":"EP1650800038891","name":"Geryon-0","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":139,"y":182},"_isHovered":false,"_isSelected":true,"_hoverOverride":true,"size":{"sizeX":141,"sizeY":73},"shape":"RECT","link":"","text":"d asd","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#ff0","isFilled":true,"_chunks":[{"x":183.44736842105263,"y":223.5,"text":"d asd"}],"elements":[{"id":"SEP1650800042963","name":"Geryon-0Leprechaun-1","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":374,"y":187},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"size":{"sizeX":193,"sizeY":62},"shape":"RECT","link":"","text":"ds","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[{"x":455.5769230769231,"y":223,"text":"ds"}],"elements":[{"id":"SH1650800049691","name":"Basilisk-2","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":610,"y":135},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"size":{"sizeX":100,"sizeY":51},"shape":"RECT","link":"Linky","text":"Linky","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[{"x":634.6428571428571,"y":165.5,"text":"Linky"}]},{"id":"LN1650800052571","name":"Cyclops-3","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":530,"y":212},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"startArrowStyle":"NONE","endArrowStyle":"NONE","startArrowSize":"SMALL","endArrowSize":"SMALL","secondaryCords":[{"x":621,"y":168}],"tempStartCord":null,"tempCord":null,"cordsSet":false,"held":false},{"id":"SEP1650800055932","name":"Geryon-0Leprechaun-1Makara-4","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":372,"y":276},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"size":{"sizeX":199,"sizeY":68},"shape":"RECT","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[],"elements":[{"id":"SH1650800109051","name":"Makara-5","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":615,"y":341},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"size":{"sizeX":121,"sizeY":59},"shape":"RECT","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[]}],"isHoverable":true,"hoverBorderColor":"#77DD66","isSelectable":true,"isSelectedByDefault":false,"selectedFillColor":"#fff","selectedBorderColor":"#265828","_display":true}],"isHoverable":true,"hoverBorderColor":"#77DD66","isSelectable":true,"isSelectedByDefault":true,"selectedFillColor":"#fff","selectedBorderColor":"#265828","_display":true}],"isHoverable":true,"hoverBorderColor":"#fff","isSelectable":true,"isSelectedByDefault":false,"selectedFillColor":"#eee","selectedBorderColor":"#265828","_display":true},{"id":"EP1650800111019","name":"Werewolf-6","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":123,"y":414},"_isHovered":false,"_isSelected":false,"_hoverOverride":true,"size":{"sizeX":169,"sizeY":73},"shape":"RECT","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[],"elements":[{"id":"SH1650800112874","name":"Cerberus-7","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":452,"y":536},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"size":{"sizeX":130,"sizeY":51},"shape":"RECT","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[]},{"id":"LN1650800114946","name":"Makara-8","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":294,"y":488},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"startArrowStyle":"NONE","endArrowStyle":"NONE","startArrowSize":"SMALL","endArrowSize":"SMALL","secondaryCords":[{"x":450,"y":538}],"tempStartCord":null,"tempCord":null,"cordsSet":false,"held":false},{"id":"LN1650800119459","name":"Leviathan-9","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":584,"y":537},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"startArrowStyle":"NONE","endArrowStyle":"NONE","startArrowSize":"SMALL","endArrowSize":"SMALL","secondaryCords":[{"x":756,"y":538}],"tempStartCord":null,"tempCord":null,"cordsSet":false,"held":false}],"isHoverable":true,"hoverBorderColor":"#77DD66","isSelectable":true,"isSelectedByDefault":false,"selectedFillColor":"#fff","selectedBorderColor":"#265828","_display":true},{"id":"EP1650800123795","name":"Serpopard-10","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":755,"y":537},"_isHovered":false,"_isSelected":false,"_hoverOverride":true,"size":{"sizeX":167,"sizeY":53},"shape":"RECT","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[],"elements":[],"isHoverable":true,"hoverBorderColor":"#77DD66","isSelectable":true,"isSelectedByDefault":false,"selectedFillColor":"#fff","selectedBorderColor":"#265828","_display":true}],"_selecting":false,"_defaultValues":{"width":1024,"height":800,"color":"#000","strokeWidth":0.6,"textColor":"#000","textSize":15,"fillColor":"#fff","hoverBorderColor":"#77DD66","selectedFillColor":"#fff","selectedBorderColor":"#265828","backgroundColor":"#F8F8F8"},"src":null,"version":"1.0.0"}
+    data = {"entryPoints":[{"id":"EP1651077665218","name":"Loch Ness Monster-0","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":49,"y":138},"_isHovered":false,"_isSelected":true,"_hoverOverride":true,"size":{"sizeX":83,"sizeY":42},"shape":"RECT","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[],"elements":[{"id":"SH1651077668649","name":"Ahuizotl-1","color":"#000","strokeWidth":0.6,"lineStyle":"DOTTED","cords":{"x":176,"y":220},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"size":{"sizeX":143,"sizeY":48},"shape":"ROUNDEDRECT","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":true,"_chunks":[]},{"id":"SH1651077673890","name":"Yacuruna-2","color":"#000","strokeWidth":0.6,"lineStyle":"DOTTED","cords":{"x":173,"y":143},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"size":{"sizeX":158,"sizeY":50},"shape":"OVAL","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":true,"_chunks":[]},{"id":"SH1651077678625","name":"Fairy-3","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":188,"y":334},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"size":{"sizeX":109,"sizeY":59},"shape":"CIRCLE","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[]},{"id":"SH1651077693905","name":"Pegasus-4","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":351,"y":324},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"size":{"sizeX":81,"sizeY":103},"shape":"DIAMOND","link":"","text":"","textSize":15,"textColor":"#000","textAlign":"CENTER","fillColor":"#fff","isFilled":false,"_chunks":[]},{"id":"LN1651077706062","name":"Mermaid-5","color":"#000","strokeWidth":0.6,"lineStyle":"FULL","cords":{"x":134,"y":161},"_isHovered":false,"_isSelected":false,"_hoverOverride":false,"startArrowStyle":"FILLED","endArrowStyle":"UNFILLED","startArrowSize":"SMALL","endArrowSize":"SMALL","secondaryCords":[{"x":172,"y":166},{"x":175,"y":243},{"x":189,"y":347},{"x":228,"y":312},{"x":261,"y":312},{"x":296,"y":338},{"x":351,"y":371}],"tempStartCord":null,"tempCord":{"x":175,"y":243},"cordsSet":true,"held":false}],"isHoverable":true,"hoverBorderColor":"#77DD66","isSelectable":true,"isSelectedByDefault":false,"selectedFillColor":"#eee","selectedBorderColor":"#265828","_display":true}],"_selecting":false,"_defaultValues":{"width":1024,"height":800,"color":"#000","strokeWidth":0.6,"textColor":"#000","textSize":15,"fillColor":"#fff","hoverBorderColor":"#77DD66","selectedFillColor":"#eee","selectedBorderColor":"#265828","backgroundColor":"#F8F8F8"},"src":null,"version":"1.0.0"}
     // 
 
     load();
