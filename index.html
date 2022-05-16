@@ -264,6 +264,15 @@
          */
         calculateChunks (x, y, sizeX, sizeY, textSize, text, align, shape) {
             if(sizeX > 5 && sizeY > 2) {
+                if(align === "CODE"){
+                    let texts = text.split("\n");
+                    let chunks = [];
+                    let topPadding = Math.round((textSize/100) * 130);
+                    for(let i = 0; i < texts.length;i++) {
+                        chunks.push({x:x + 5,y:y+topPadding+(i*textSize),text:texts[i] });
+                    }
+                    return chunks
+                }
                 text = text.trim();
                 const len = text.length;
                 let maxLen = Math.floor(sizeX / (textSize/2)) + Math.floor(sizeX/100);
@@ -702,7 +711,7 @@
                 drawing.drawImage(0,0,1178,798,0,0,920,512,ctx,bgImage);
             }
         
-            let eps = lib2d.reversed(entryPoints)
+            let eps = entryPoints; //lib2d.reversed(entryPoints) // why
             eps.forEach(ep => {
                 if(ep.shouldDraw()){
                     ep.draw(ctx);
