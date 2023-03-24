@@ -676,14 +676,22 @@
             this._isSelected = this.isSelectedByDefault;
         }
 
-        setHovered(bool){this._isHovered= bool; if(!this._isHovered){this._hoverOverride = false}}
+        setHovered(bool){
+            if(this.isHoverable){
+                this._isHovered= bool; if(!this._isHovered){this._hoverOverride = false}
+            }
+        }
         toggleSelected(){
-            this._isSelected = !this._isSelected; 
+            this.setSelected(!this._isSelected);
+        }
+
+        setSelected(bool){
+            this._isSelected = bool;
             this._hoverOverride = true;
             if(this._isSelected === false){
                 let sep = this.getSEP();
                 sep.forEach(ep => {
-                    ep.toggleSelected(false)
+                    ep.setSelected(false);
                 })
             }
         }
