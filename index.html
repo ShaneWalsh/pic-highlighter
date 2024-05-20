@@ -691,20 +691,22 @@
             }
         }
         toggleSelected(){
-            let bool = !this._isSelected;
-            if(bool === true) {
-                // if we are enabling an EP, and it has an exclusionGroup set
-                if(this.exclusionGroup && this.exclusionGroup.length > 0){
-                    let eps = epsOnSameLevel(this, entryPoints);
-                    for(let ep of eps){
-                        // Don't toggle the current ep, and only ones with the same EG
-                        if(ep !== this && ep.exclusionGroup === this.exclusionGroup){ 
-                            ep.setSelected(false);
+            if(this.isSelectable){
+                let bool = !this._isSelected;
+                if(bool === true) {
+                    // if we are enabling an EP, and it has an exclusionGroup set
+                    if(this.exclusionGroup && this.exclusionGroup.length > 0){
+                        let eps = epsOnSameLevel(this, entryPoints);
+                        for(let ep of eps){
+                            // Don't toggle the current ep, and only ones with the same EG
+                            if(ep !== this && ep.exclusionGroup === this.exclusionGroup){ 
+                                ep.setSelected(false);
+                            }
                         }
                     }
                 }
+                this.setSelected(bool);
             }
-            this.setSelected(bool);
         }
 
         setSelected(bool){
